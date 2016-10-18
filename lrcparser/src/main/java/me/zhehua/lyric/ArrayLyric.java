@@ -1,25 +1,47 @@
 package me.zhehua.lyric;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.AbstractMap;
+
+import me.zhehua.LrcParser;
 
 /**
  * Lyric sequence start with "1" because it has an empty head.
+ *
  * Created by Zhehua on 2016/10/18.
  */
-public class HeadedLyric extends Lyric {
+public class ArrayLyric extends Lyric {
+    InputStream mLyricInputStream;
 
-    public HeadedLyric() {
+    public ArrayLyric() {
         super();
         mLyric.add(new AbstractMap.SimpleEntry<>(-1L, "head"));
     }
 
-    @Override
-    public String getOneLine(long milliTime) {
-        return getOneLine(searchOneLine(milliTime));
+    public ArrayLyric(InputStream inputStream) throws IOException {
+        this();
+        setInputStream(inputStream);
+    }
+
+    /**
+     * Only one input stream is supported.
+     * @param inputStream
+     * @throws IOException
+     */
+    public void setInputStream(InputStream inputStream) throws IOException {
+        if (mLyricInputStream == null) {
+            LrcParser.parseSource(this, inputStream);
+        }
     }
 
     @Override
-    public String getOneLine(int index) {
+    public String getLine(long milliTime) {
+        return getLine(searchOneLine(milliTime));
+    }
+
+    @Override
+    public String getLine(int index) {
         if (index < mLyric.size() && index > 0)
             return mLyric.get(index).getValue();
         return null;
@@ -33,8 +55,8 @@ public class HeadedLyric extends Lyric {
     }
 
     protected int searchOneLine(long time) {
-        int left = 1;
-        int right = mLyric.size() - 1;
+        int left = 0;
+        int right = mLyric.size();
         int middle = -1;
 
         while (left < right - 1) {
@@ -49,6 +71,4 @@ public class HeadedLyric extends Lyric {
             return -1;
         return left;
     }
-
-
 }
