@@ -28,7 +28,7 @@ public abstract class Lyric implements Iterable<AbstractMap.SimpleEntry<Long, St
     public abstract void append(long milliTime, String oneLine);
 
     @Override
-    public Iterator iterator() {
+    public Iterator<AbstractMap.SimpleEntry<Long, String>> iterator() {
         return mLyric.iterator();
     }
 }

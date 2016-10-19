@@ -27,4 +27,16 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    boolean started = false;
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus && !started) {
+            mLyricView.startScroll();
+            started = true;
+        }
+    }
 }
