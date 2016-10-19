@@ -15,6 +15,8 @@ public abstract class Lyric implements Iterable<AbstractMap.SimpleEntry<Long, St
         this.mLyric = new ArrayList<>();
     }
 
+    public abstract int getLineIndex(long milliTime);
+
     public abstract String getLine(long milliTime);
 
     public abstract String getLine(int index);
@@ -26,6 +28,10 @@ public abstract class Lyric implements Iterable<AbstractMap.SimpleEntry<Long, St
         return -1L;
     }
     public abstract void append(long milliTime, String oneLine);
+
+    public int size() {
+        return mLyric.size();
+    }
 
     @Override
     public Iterator<AbstractMap.SimpleEntry<Long, String>> iterator() {

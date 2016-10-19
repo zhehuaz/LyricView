@@ -5,6 +5,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -15,14 +16,19 @@ import android.widget.Scroller;
 import android.widget.TextView;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import me.zhehua.lyric.Lyric;
+
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Created by Zhehua on 2016/10/18.
  */
 
-public class LyricView extends FrameLayout {
+public class LyricView extends FrameLayout implements View.OnTouchListener{
 
     private static final String TAG = "LyricView";
 
@@ -31,6 +37,7 @@ public class LyricView extends FrameLayout {
     protected LinearLayout mContentView;
 
     protected Lyric mLyric;
+    private List<Integer> mLineYPositions;
     private int halfHeight;
 
     private Scroller mScroller;
@@ -41,20 +48,33 @@ public class LyricView extends FrameLayout {
 
     public LyricView(final Context context, AttributeSet attrs) {
         super(context, attrs);
-        mContentView = new LinearLayout(context);
+        mContentView = new LinearLayout(context) {
+            @Override
+            protected void onLayout(boolean changed, int l, int t, int r, int b) {
+                Log.i(TAG, "linear layout");
+                super.onLayout(changed, l, t, r, b);
+                if (getChildCount() == mLyric.size() + 2) {
+                    markTextY();
+                }
+            }
+//
+//            public void markTextY() {
+//                int position = 0;
+//                for (int i = 1; i < mContentView.getChildCount() - 1; i ++) {
+//                    mLineYPositions.add(position);
+//                    position += mContentView.getChildAt(i).getHeight();
+//                }
+//            }
+        };
         mContentView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         mContentView.setOrientation(LinearLayout.VERTICAL);
         mScroller = new Scroller(context);
         mScrollLyricView = new ScrollView(context) {
-
-
             @Override
             public void computeScroll() {
                 super.computeScroll();
-                Log.i(TAG, "computeScroll");
                 if (mScroller.computeScrollOffset()) {
-                    Log.i(TAG, "x " + mScroller.getCurrX() + " y " + mScroller.getCurrY());
                     this.scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
                     invalidate();
                 }
@@ -65,7 +85,7 @@ public class LyricView extends FrameLayout {
         mScrollLyricView.addView(mContentView);
         mScrollLyricView.setFillViewport(true);
         mScrollLyricView.setVerticalScrollBarEnabled(false);
-//        mScrollLyricView.setScrollbarFadingEnabled(false);
+        mScrollLyricView.setOnTouchListener(this);
         addView(mScrollLyricView);
     }
 
@@ -73,20 +93,39 @@ public class LyricView extends FrameLayout {
         super(context, attrs, defStyleAttr);
     }
 
+    public void markTextY() {
+        int position = 0;
+        for (int i = 1; i < mContentView.getChildCount() - 1; i ++) {
+            mLineYPositions.add(position);
+            position += mContentView.getChildAt(i).getHeight();
+        }
+    }
 
     public void setLyric(Lyric lyric) {
         mLyric = lyric;
-        mScrollLyricView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        mLineYPositions = new ArrayList<>(lyric.size());
+        initViews();
+        mContentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 halfHeight = mScrollLyricView.getHeight() / 2;
+                Log.i(TAG, "onLayout");
                 mScrollLyricView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                initViews();
+                ViewGroup.LayoutParams headerLayoutParams = mContentView.getChildAt(0).getLayoutParams();
+                headerLayoutParams.height = halfHeight;
+                mContentView.getChildAt(0).setLayoutParams(headerLayoutParams);
+
+                ViewGroup.LayoutParams footerLayoutParams = mContentView.getChildAt(mContentView.getChildCount() - 1)
+                        .getLayoutParams();
+                footerLayoutParams.height = halfHeight;
+                mContentView.getChildAt(0).setLayoutParams(footerLayoutParams);
+                markTextY();
             }
         });
     }
 
     private void initViews() {
+
         View blankHeader = new View(getContext());
         blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
@@ -104,30 +143,69 @@ public class LyricView extends FrameLayout {
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             mContentView.addView(textView);
         }
-        View blankFooter = new View(getContext());
+        final View blankFooter = new View(getContext());
         blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
         mContentView.addView(blankFooter);
     }
 
-    public void startScroll() {
-        startScroll(0L);
+    /**
+     * Start to scroll, make sure to call this after {@link android.app.Activity#onWindowFocusChanged(boolean)}.
+     *
+     * @return if successfully start to scroll.If not, you probably call this too early.
+     */
+    public boolean startScroll() {
+        return startScroll(0L);
     }
 
-    public void startScroll(long startTime) {
-        Log.i(TAG, "start to scroll");
-        mScroller.startScroll(0, (int) startTime, 0, 100, 500);
-        mScrollLyricView.invalidate();
-        final int finalStartTime = (int) startTime + 100;
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                startScroll(finalStartTime);
-            }
-        }, 1000);
+    boolean isSkipScroll = false;
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        Log.i(TAG, "touch event:" + event.getAction());
+        switch (event.getAction()) {
+            case ACTION_DOWN:
+                isSkipScroll = true;
+                break;
+            case ACTION_UP:
+                isSkipScroll = false;
+                break;
+        }
+        return false;
+    }
+
+    public class ScrollRunnable implements Runnable {
+        long nextTime;
+
+        @Override
+        public void run() {
+            startScroll(nextTime);
+        }
+    }
+
+    ScrollRunnable mScrollRunnable = new ScrollRunnable();
+
+    public boolean startScroll(long startTime) {
+        if (mLineYPositions == null || mLyric == null) {
+            throw new IllegalStateException("No lyric content found. Call setLyric() first.");
+        }
+        if (mLineYPositions.isEmpty())
+            return false;
+        int lineIndex = mLyric.getLineIndex(startTime);
+        if (lineIndex < mLyric.size() - 1) { // prepare for the next scroll
+            mScrollRunnable.nextTime = mLyric.getMilliTime(lineIndex + 1);
+            postDelayed(mScrollRunnable, mScrollRunnable.nextTime - startTime);
+        }
+
+        if (!isSkipScroll) { // execute this scroll
+            int curY = mScrollLyricView.getScrollY();
+            mScroller.startScroll(0, curY, 0, mLineYPositions.get(lineIndex) - curY, 1000);
+            mScrollLyricView.invalidate();
+        }
+        return true;
     }
 
     public void pauseScroll() {
-//        removeCallbacks();
+        removeCallbacks(mScrollRunnable);
     }
 }

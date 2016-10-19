@@ -2,6 +2,7 @@ package me.zhehua.scrollinglyric;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +12,7 @@ import me.zhehua.lyric.Lyric;
 import me.zhehua.uilibrary.LyricView;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
     LyricView mLyricView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onWindowFocusChanged(hasFocus);
 
         if (hasFocus && !started) {
+            Log.i(TAG, "window focused");
             mLyricView.startScroll();
             started = true;
         }

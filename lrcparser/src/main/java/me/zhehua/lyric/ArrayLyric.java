@@ -22,6 +22,11 @@ public class ArrayLyric extends Lyric {
         mLyric.add(new AbstractMap.SimpleEntry<>(-1L, "head"));
     }
 
+    @Override
+    public int getLineIndex(long milliTime) {
+        return searchOneLine(milliTime);
+    }
+
     public ArrayLyric(InputStream inputStream) throws IOException {
         this();
         setInputStream(inputStream);
