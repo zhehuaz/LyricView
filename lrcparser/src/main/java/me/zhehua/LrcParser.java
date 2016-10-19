@@ -16,10 +16,9 @@ public class LrcParser {
 
     public static void parseSource(Lyric lyric, InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
         String line;
 
-        while ((line = reader.readLine()) != null && line.length() > 0) {
+        while ((line = reader.readLine()) != null) {
             constructOneLine(lyric, line);
         }
     }

@@ -2,12 +2,13 @@ package me.zhehua.lyric;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by Zhehua on 2016/10/18.
  */
 
-public abstract class Lyric {
+public abstract class Lyric implements Iterable<AbstractMap.SimpleEntry<Long, String>>{
     protected ArrayList<AbstractMap.SimpleEntry<Long, String>> mLyric;
 
     public Lyric() {
@@ -25,4 +26,9 @@ public abstract class Lyric {
         return -1L;
     }
     public abstract void append(long milliTime, String oneLine);
+
+    @Override
+    public Iterator iterator() {
+        return mLyric.iterator();
+    }
 }
