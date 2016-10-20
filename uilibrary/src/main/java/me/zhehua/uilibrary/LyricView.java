@@ -33,12 +33,15 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
     private static final String TAG = "LyricView";
 
     protected ScrollView mScrollLyricView;
-    protected LinearLayout mIndicator;
+    protected LyricIndicator mIndicator;
     protected LinearLayout mContentView;
 
     protected Lyric mLyric;
     private List<Integer> mLineYPositions;
     private int halfHeight;
+
+    private OnLyricProgressChangedListener mProgressChangedListener;
+    private OnLyricReadyListener mReadyListener;
 
     private Scroller mScroller;
 
@@ -78,11 +81,25 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         mScrollLyricView.setVerticalScrollBarEnabled(false);
         mScrollLyricView.setOnTouchListener(this);
         mScrollLyricView.setOnScrollChangeListener(this);
+        mIndicator = new LyricIndicator(context);
+        FrameLayout.LayoutParams indicatorLayoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL);
+        mIndicator.setLayoutParams(indicatorLayoutParams);
+        mIndicator.disable();
         addView(mScrollLyricView);
+        addView(mIndicator);
     }
 
     public LyricView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setProgressChangedListener(OnLyricProgressChangedListener mProgressChangedListener) {
+        this.mProgressChangedListener = mProgressChangedListener;
+    }
+
+    public void setReadyListener(OnLyricReadyListener mReadyListener) {
+        this.mReadyListener = mReadyListener;
     }
 
     private void markTextY() {
@@ -113,6 +130,23 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
                 footerLayoutParams.height = halfHeight;
                 mContentView.getChildAt(0).setLayoutParams(footerLayoutParams);
                 markTextY();
+                if (mReadyListener != null) {
+                    mReadyListener.onReady(LyricView.this);
+                }
+
+                // set click callback when view is ready
+                mIndicator.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mIndicator.disable();
+                        pauseScroll();
+                        long curProgress = mLyric.getMilliTime(currSelectedLine);
+                        startScroll(curProgress);
+                        if (mProgressChangedListener != null) {
+                            mProgressChangedListener.onProgressChanged(curProgress);
+                        }
+                    }
+                });
             }
         });
     }
@@ -160,6 +194,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         switch (event.getAction()) {
             case ACTION_DOWN:
                 isSkipScroll = true;
+                mIndicator.enable();
                 break;
             case ACTION_UP:
                 postDelayed(new Runnable() {
@@ -227,6 +262,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         }
 
         if (!isSkipScroll) { // execute this scroll
+            mIndicator.disable();
             int curY = mScrollLyricView.getScrollY();
             // not accurate
             mScroller.startScroll(0, curY, 0, mLineYPositions.get(curHighlightLine) - curY - 5, 1000);
@@ -237,5 +273,17 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
 
     public void pauseScroll() {
         removeCallbacks(mScrollRunnable);
+    }
+
+    public interface OnLyricProgressChangedListener {
+        /**
+         *
+         * @param progress playback progress in milliseconds
+         */
+        void onProgressChanged(long progress);
+    }
+
+    public interface OnLyricReadyListener {
+        void onReady(View view);
     }
 }
