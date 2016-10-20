@@ -13,5 +13,6 @@
     <me.zhehua.uilibrary.LyricView
         android:id="@+id/lv_main"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:background="#212121"/>
 </RelativeLayout>

@@ -28,7 +28,7 @@ import static android.view.MotionEvent.ACTION_UP;
  * Created by Zhehua on 2016/10/18.
  */
 
-public class LyricView extends FrameLayout implements View.OnTouchListener{
+public class LyricView extends FrameLayout implements View.OnTouchListener, View.OnScrollChangeListener{
 
     private static final String TAG = "LyricView";
 
@@ -42,30 +42,21 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
 
     private Scroller mScroller;
 
+    private int mNormalTextColor = DEFAULT_NORMAL_COLOR;
+    private int mSelectedTextColor = DEFAULT_SELECTED_COLOR;
+    private int mHighlightTextColor = DEFAULT_HIGHLIGHT_COLOR;
+
+    private static final int DEFAULT_NORMAL_COLOR = 0x50e0e0e0;
+    private static final int DEFAULT_SELECTED_COLOR = 0x90e0e0e0;
+    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xf0e0e0e0;
+
     public LyricView(Context context) {
         this(context, null);
     }
 
     public LyricView(final Context context, AttributeSet attrs) {
         super(context, attrs);
-        mContentView = new LinearLayout(context) {
-            @Override
-            protected void onLayout(boolean changed, int l, int t, int r, int b) {
-                Log.i(TAG, "linear layout");
-                super.onLayout(changed, l, t, r, b);
-                if (getChildCount() == mLyric.size() + 2) {
-                    markTextY();
-                }
-            }
-//
-//            public void markTextY() {
-//                int position = 0;
-//                for (int i = 1; i < mContentView.getChildCount() - 1; i ++) {
-//                    mLineYPositions.add(position);
-//                    position += mContentView.getChildAt(i).getHeight();
-//                }
-//            }
-        };
+        mContentView = new LinearLayout(context);
         mContentView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         mContentView.setOrientation(LinearLayout.VERTICAL);
@@ -86,6 +77,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
         mScrollLyricView.setFillViewport(true);
         mScrollLyricView.setVerticalScrollBarEnabled(false);
         mScrollLyricView.setOnTouchListener(this);
+        mScrollLyricView.setOnScrollChangeListener(this);
         addView(mScrollLyricView);
     }
 
@@ -93,9 +85,10 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
         super(context, attrs, defStyleAttr);
     }
 
-    public void markTextY() {
+    private void markTextY() {
         int position = 0;
-        for (int i = 1; i < mContentView.getChildCount() - 1; i ++) {
+//        mLineYPositions.add(-1);// empty position
+        for (int i = 1; i < mContentView.getChildCount(); i ++) {
             mLineYPositions.add(position);
             position += mContentView.getChildAt(i).getHeight();
         }
@@ -126,7 +119,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
 
     private void initViews() {
 
-        View blankHeader = new View(getContext());
+        TextView blankHeader = new TextView(getContext());
         blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
         mContentView.addView(blankHeader);
@@ -134,16 +127,18 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         for (AbstractMap.SimpleEntry<Long, String> sentence : mLyric) {
-            TextView textView = new TextView(getContext());
-            textView.setText(sentence.getValue());
-            textView.setTextColor(0xffff0000);
-            textView.setLayoutParams(textLayoutParams);
-            textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            textView.setPadding(20, 20, 15, 15);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            mContentView.addView(textView);
+            if (sentence.getKey() > 0) {
+                TextView textView = new TextView(getContext());
+                textView.setText(sentence.getValue());
+                textView.setTextColor(0x50e0e0e0);
+                textView.setLayoutParams(textLayoutParams);
+                textView.setGravity(Gravity.CENTER_HORIZONTAL);
+                textView.setPadding(20, 20, 15, 15);
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                mContentView.addView(textView);
+            }
         }
-        final View blankFooter = new View(getContext());
+        final TextView blankFooter = new TextView(getContext());
         blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
         mContentView.addView(blankFooter);
@@ -158,20 +153,46 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
         return startScroll(0L);
     }
 
-    boolean isSkipScroll = false;
+    private volatile boolean isSkipScroll = false;
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        Log.i(TAG, "touch event:" + event.getAction());
         switch (event.getAction()) {
             case ACTION_DOWN:
                 isSkipScroll = true;
                 break;
             case ACTION_UP:
-                isSkipScroll = false;
+                postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        isSkipScroll = false;
+                    }
+                }, 3000);
                 break;
         }
         return false;
+    }
+
+    private int currSelectedLine = 0;
+    private int curHighlightLine = 0;
+
+    @Override
+    public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+        int lastSelected = currSelectedLine;
+        if (scrollY > mLineYPositions.get(currSelectedLine)) {
+            currSelectedLine = Math.min(mLineYPositions.size() - 1, currSelectedLine + 1);
+        } else if (currSelectedLine > 0 && scrollY < mLineYPositions.get(currSelectedLine - 1)) {
+            currSelectedLine = Math.max(0, currSelectedLine - 1);
+        } else {
+            return;
+        }
+        Log.d(TAG, "currSelectedLine: " + currSelectedLine + " scrollY: " + scrollY + " linePosition: " + mLineYPositions.get(currSelectedLine));
+        if (lastSelected != curHighlightLine) {
+            ((TextView) mContentView.getChildAt(lastSelected)).setTextColor(mNormalTextColor);
+        }
+        if (currSelectedLine != curHighlightLine) {
+            ((TextView) mContentView.getChildAt(currSelectedLine)).setTextColor(mSelectedTextColor);
+        }
     }
 
     public class ScrollRunnable implements Runnable {
@@ -183,7 +204,12 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
         }
     }
 
-    ScrollRunnable mScrollRunnable = new ScrollRunnable();
+    private void switchHighlight(int from, int to) {
+        ((TextView) mContentView.getChildAt(to)).setTextColor(mHighlightTextColor);
+        ((TextView) mContentView.getChildAt(from)).setTextColor(mNormalTextColor);
+    }
+
+    private ScrollRunnable mScrollRunnable = new ScrollRunnable();
 
     public boolean startScroll(long startTime) {
         if (mLineYPositions == null || mLyric == null) {
@@ -191,15 +217,19 @@ public class LyricView extends FrameLayout implements View.OnTouchListener{
         }
         if (mLineYPositions.isEmpty())
             return false;
-        int lineIndex = mLyric.getLineIndex(startTime);
-        if (lineIndex < mLyric.size() - 1) { // prepare for the next scroll
-            mScrollRunnable.nextTime = mLyric.getMilliTime(lineIndex + 1);
+        int lastHighlightLine = curHighlightLine;
+        curHighlightLine = mLyric.getLineIndex(startTime);
+        Log.d(TAG, "lastHighlight: " + lastHighlightLine + " curHighlight: " + curHighlightLine);
+        switchHighlight(lastHighlightLine, curHighlightLine); // highlight one line
+        if (curHighlightLine < mLyric.size() - 1) { // prepare for the next scroll
+            mScrollRunnable.nextTime = mLyric.getMilliTime(curHighlightLine + 1);
             postDelayed(mScrollRunnable, mScrollRunnable.nextTime - startTime);
         }
 
         if (!isSkipScroll) { // execute this scroll
             int curY = mScrollLyricView.getScrollY();
-            mScroller.startScroll(0, curY, 0, mLineYPositions.get(lineIndex) - curY, 1000);
+            // not accurate
+            mScroller.startScroll(0, curY, 0, mLineYPositions.get(curHighlightLine) - curY - 5, 1000);
             mScrollLyricView.invalidate();
         }
         return true;
