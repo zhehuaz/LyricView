@@ -7,8 +7,9 @@ A netease-music-like scrolling lyric view.
 
 - Parsing .lrc file
 - Auto scrolling
-- Text Highlight
+- Text highlight
 - Manual progress select
+- Multi-language display
 
 ## Usage
   
@@ -22,19 +23,23 @@ Declare it like this in your XML:
         android:layout_height="match_parent"
         android:background="#212121"/>
 ```
-And call this to initialize the view:
+And call this to initialize the view in `OnCreate()`:
 ```Java
   mLyricView = (LyricView) findViewById(R.id.lv_main);
   InputStream lrcStream = getResources().openRawResource(R.raw.sample);
   try {
-      Lyric lyric = new ArrayLyric(lrcStream);
+      LyricAdapter lyric = new SimpleLyricAdapter(lrcStream);
       lrcStream.close();
-      mLyricView.setLyric(lyric);
+      mLyricView.setLyricAdapter(lyric);
   } catch (IOException e) {
       e.printStackTrace();
   }
 ```
-When `setLyric()` is called, the lyric view starts to build.
+Or you can use `DoubleLyricAdatper` initialized with two streams to show a two-way display lyric view.
+
+If no adpter fits your need, use a custom adatper extending `LyricAdapter`.
+
+When `setLyricAdapter()` is called, the lyric view starts to build.
 
 Then call
 ```Java
@@ -43,7 +48,9 @@ Then call
 to start the scroll.
 
 Be careful that you have to call this after the view in activity is shown.
+
 It's safe to call this in `Activity#onWindowFocusChanged(boolean)`.
+
 If you're not sure about this, get the proper time by calling:
 ```Java
     mLyricView.setReadyListener(new LyricView.OnLyricReadyListener() {
