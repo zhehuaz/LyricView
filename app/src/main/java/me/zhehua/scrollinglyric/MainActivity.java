@@ -7,9 +7,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 
-import me.zhehua.uilibrary.DoubleLyricAdapter;
-import me.zhehua.uilibrary.LyricAdapter;
 import me.zhehua.uilibrary.LyricView;
+import me.zhehua.uilibrary.adapter.DoubleLyricAdapter;
+import me.zhehua.uilibrary.adapter.LyricAdapter;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";

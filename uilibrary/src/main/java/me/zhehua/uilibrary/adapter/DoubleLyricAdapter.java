@@ -1,4 +1,4 @@
-package me.zhehua.uilibrary;
+package me.zhehua.uilibrary.adapter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +43,11 @@ public class DoubleLyricAdapter extends LyricAdapter {
 
     @Override
     public String getLine(int index) {
-        return mLyricA.getLine(index) + "\n" + mLyricB.getLine(index);
+        String lineB = mLyricB.getLine(index);
+        if (lineB != null) {
+            return mLyricA.getLine(index) + "\n" + mLyricB.getLine(index);
+        }
+        return mLyricA.getLine(index);
     }
 
     @Override

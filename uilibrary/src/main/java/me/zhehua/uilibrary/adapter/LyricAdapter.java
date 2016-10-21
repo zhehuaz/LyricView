@@ -1,4 +1,4 @@
-package me.zhehua.uilibrary;
+package me.zhehua.uilibrary.adapter;
 
 /**
  * Attention : The index of lyric sentences starts from 1.
@@ -28,7 +28,7 @@ public abstract class LyricAdapter {
         }
     }
 
-    interface DataSetObserver {
+    public interface DataSetObserver {
         void onDataSetChanged(LyricAdapter lyricAdapter);
     }
 }

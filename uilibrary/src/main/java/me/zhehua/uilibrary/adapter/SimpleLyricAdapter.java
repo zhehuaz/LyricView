@@ -1,4 +1,4 @@
-package me.zhehua.uilibrary;
+package me.zhehua.uilibrary.adapter;
 
 import java.io.IOException;
 import java.io.InputStream;
