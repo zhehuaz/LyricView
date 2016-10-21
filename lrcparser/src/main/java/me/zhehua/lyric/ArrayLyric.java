@@ -3,6 +3,8 @@ package me.zhehua.lyric;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import me.zhehua.LrcParser;
 import me.zhehua.SimpleLrcParser;
@@ -12,7 +14,9 @@ import me.zhehua.SimpleLrcParser;
  *
  * Created by Zhehua on 2016/10/18.
  */
-public class ArrayLyric extends Lyric {
+public class ArrayLyric implements Lyric {
+    protected ArrayList<AbstractMap.SimpleEntry<Long, String>> mLyric;
+
     InputStream mLyricInputStream;
     LrcParser mLrcParser;
 
@@ -60,10 +64,23 @@ public class ArrayLyric extends Lyric {
     }
 
     @Override
+    public long getMilliTime(int index) {
+        if (index < mLyric.size()) {
+            return mLyric.get(index).getKey();
+        }
+        return -1L;
+    }
+
+    @Override
     public void append(long milliTime, String oneLine) {
         if (mLyric.get(mLyric.size() - 1).getKey() < milliTime) {
             mLyric.add(new AbstractMap.SimpleEntry<>(milliTime, oneLine));
         }
+    }
+
+    @Override
+    public int size() {
+        return mLyric.size();
     }
 
     /**
@@ -88,5 +105,10 @@ public class ArrayLyric extends Lyric {
         if (middle == -1)
             return -1;
         return left;
+    }
+
+    @Override
+    public Iterator iterator() {
+        return null;
     }
 }

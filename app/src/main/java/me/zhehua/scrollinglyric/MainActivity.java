@@ -20,11 +20,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mLyricView = (LyricView) findViewById(R.id.lv_main);
-        InputStream lrcStream = getResources().openRawResource(R.raw.sample);
+        InputStream lrcAStream = getResources().openRawResource(R.raw.sample);
+        InputStream lrcBStream = getResources().openRawResource(R.raw.sample_cn);
         try {
-            Lyric lyric = new ArrayLyric(lrcStream);
-            lrcStream.close();
-            mLyricView.setLyric(lyric);
+            Lyric lyricA = new ArrayLyric(lrcAStream);
+//            Lyric lyricB = new ArrayLyric(lrcBStream);
+            lrcAStream.close();
+//            lrcBStream.close();
+            mLyricView.setLyric(lyricA);
         } catch (IOException e) {
             e.printStackTrace();
         }
