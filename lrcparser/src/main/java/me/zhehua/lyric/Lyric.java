@@ -1,40 +1,23 @@
 package me.zhehua.lyric;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
+ * Attention: The first sentence of lyric should be null.
+ *            Or to say, the index of lyric starts with 1.
  * Created by Zhehua on 2016/10/18.
  */
 
-public abstract class Lyric implements Iterable<AbstractMap.SimpleEntry<Long, String>>{
-    protected ArrayList<AbstractMap.SimpleEntry<Long, String>> mLyric;
+public interface Lyric extends Iterable<AbstractMap.SimpleEntry<Long, String>> {
+    int getLineIndex(long milliTime);
 
-    public Lyric() {
-        this.mLyric = new ArrayList<>();
-    }
+    String getLine(long milliTime);
 
-    public abstract int getLineIndex(long milliTime);
+    String getLine(int index);
 
-    public abstract String getLine(long milliTime);
+    long getMilliTime(int index);
 
-    public abstract String getLine(int index);
+    void append(long milliTime, String oneLine);
 
-    public long getMilliTime(int index) {
-        if (index < mLyric.size()) {
-            return mLyric.get(index).getKey();
-        }
-        return -1L;
-    }
-    public abstract void append(long milliTime, String oneLine);
-
-    public int size() {
-        return mLyric.size();
-    }
-
-    @Override
-    public Iterator<AbstractMap.SimpleEntry<Long, String>> iterator() {
-        return mLyric.iterator();
-    }
+    public int size();
 }

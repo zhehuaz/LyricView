@@ -15,11 +15,10 @@ import android.widget.ScrollView;
 import android.widget.Scroller;
 import android.widget.TextView;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.zhehua.lyric.Lyric;
+import me.zhehua.uilibrary.adapter.LyricAdapter;
 
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_UP;
@@ -28,7 +27,8 @@ import static android.view.MotionEvent.ACTION_UP;
  * Created by Zhehua on 2016/10/18.
  */
 
-public class LyricView extends FrameLayout implements View.OnTouchListener, View.OnScrollChangeListener{
+public class LyricView extends FrameLayout
+        implements View.OnTouchListener, View.OnScrollChangeListener, LyricAdapter.DataSetObserver{
 
     private static final String TAG = "LyricView";
 
@@ -36,7 +36,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
     protected LyricIndicator mIndicator;
     protected LinearLayout mContentView;
 
-    protected Lyric mLyric;
+    protected LyricAdapter mAdapter;
     private List<Integer> mLineYPositions;
     private int halfHeight;
 
@@ -111,10 +111,38 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         }
     }
 
-    public void setLyric(Lyric lyric) {
-        mLyric = lyric;
-        mLineYPositions = new ArrayList<>(lyric.size());
-        initViews();
+    public void setLyricAdapter(LyricAdapter lyricAdapter) {
+        mAdapter = lyricAdapter;
+        initViews(lyricAdapter.size());
+    }
+
+    private void initViews(int n) {
+        mLineYPositions = new ArrayList<>(n);
+
+        TextView blankHeader = new TextView(getContext());
+        blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                halfHeight));
+        mContentView.addView(blankHeader);
+        LinearLayout.LayoutParams textLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        int size = mAdapter.size();
+        for (int i = 1; i < size; i ++) {
+            String sentence = mAdapter.getLine(i);
+            TextView textView = new TextView(getContext());
+            textView.setText(sentence);
+            textView.setTextColor(0x50e0e0e0);
+            textView.setLayoutParams(textLayoutParams);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            textView.setPadding(20, 20, 15, 15);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            mContentView.addView(textView);
+        }
+        final TextView blankFooter = new TextView(getContext());
+        blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                halfHeight));
+        mContentView.addView(blankFooter);
+
         mContentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -140,7 +168,7 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
                     public void onClick(View v) {
                         mIndicator.disable();
                         pauseScroll();
-                        long curProgress = mLyric.getMilliTime(currSelectedLine);
+                        long curProgress = mAdapter.getMilliTime(currSelectedLine);
                         startScroll(curProgress);
                         if (mProgressChangedListener != null) {
                             mProgressChangedListener.onProgressChanged(curProgress);
@@ -149,33 +177,6 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
                 });
             }
         });
-    }
-
-    private void initViews() {
-
-        TextView blankHeader = new TextView(getContext());
-        blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                halfHeight));
-        mContentView.addView(blankHeader);
-        LinearLayout.LayoutParams textLayoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        for (AbstractMap.SimpleEntry<Long, String> sentence : mLyric) {
-            if (sentence.getKey() > 0) {
-                TextView textView = new TextView(getContext());
-                textView.setText(sentence.getValue());
-                textView.setTextColor(0x50e0e0e0);
-                textView.setLayoutParams(textLayoutParams);
-                textView.setGravity(Gravity.CENTER_HORIZONTAL);
-                textView.setPadding(20, 20, 15, 15);
-                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                mContentView.addView(textView);
-            }
-        }
-        final TextView blankFooter = new TextView(getContext());
-        blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                halfHeight));
-        mContentView.addView(blankFooter);
     }
 
     /**
@@ -230,6 +231,11 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         }
     }
 
+    @Override
+    public void onDataSetChanged(LyricAdapter lyricAdapter) {
+        initViews(lyricAdapter.size());
+    }
+
     public class ScrollRunnable implements Runnable {
         long nextTime;
 
@@ -247,17 +253,17 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
     private ScrollRunnable mScrollRunnable = new ScrollRunnable();
 
     public boolean startScroll(long startTime) {
-        if (mLineYPositions == null || mLyric == null) {
+        if (mLineYPositions == null || mAdapter == null) {
             throw new IllegalStateException("No lyric content found. Call setLyric() first.");
         }
         if (mLineYPositions.isEmpty())
             return false;
         int lastHighlightLine = curHighlightLine;
-        curHighlightLine = mLyric.getLineIndex(startTime);
+        curHighlightLine = mAdapter.getLineIndex(startTime);
         Log.d(TAG, "lastHighlight: " + lastHighlightLine + " curHighlight: " + curHighlightLine);
         switchHighlight(lastHighlightLine, curHighlightLine); // highlight one line
-        if (curHighlightLine < mLyric.size() - 1) { // prepare for the next scroll
-            mScrollRunnable.nextTime = mLyric.getMilliTime(curHighlightLine + 1);
+        if (curHighlightLine < mAdapter.size() - 1) { // prepare for the next scroll
+            mScrollRunnable.nextTime = mAdapter.getMilliTime(curHighlightLine + 1);
             postDelayed(mScrollRunnable, mScrollRunnable.nextTime - startTime);
         }
 
@@ -273,6 +279,10 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
 
     public void pauseScroll() {
         removeCallbacks(mScrollRunnable);
+    }
+
+    public LyricAdapter getAdapter() {
+        return mAdapter;
     }
 
     public interface OnLyricProgressChangedListener {
