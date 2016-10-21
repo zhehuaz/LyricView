@@ -7,8 +7,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 
-import me.zhehua.lyric.DoubleArrayLyric;
-import me.zhehua.lyric.Lyric;
+import me.zhehua.uilibrary.DoubleLyricAdapter;
+import me.zhehua.uilibrary.LyricAdapter;
 import me.zhehua.uilibrary.LyricView;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,10 +23,10 @@ public class MainActivity extends AppCompatActivity {
         InputStream lrcAStream = getResources().openRawResource(R.raw.sample);
         InputStream lrcBStream = getResources().openRawResource(R.raw.sample_cn);
         try {
-            Lyric lyric = new DoubleArrayLyric(lrcAStream, lrcBStream);
+            LyricAdapter lyricAdapter = new DoubleLyricAdapter(lrcAStream, lrcBStream);
             lrcAStream.close();
             lrcBStream.close();
-            mLyricView.setLyric(lyric);
+            mLyricView.setLyricAdapter(lyricAdapter);
         } catch (IOException e) {
             e.printStackTrace();
         }
