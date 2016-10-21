@@ -5,14 +5,30 @@ package me.zhehua.uilibrary;
  * Created by Zhehua on 2016/10/21.
  */
 
-public interface LyricAdapter {
-    int getLineIndex(long milliTime);
+public abstract class LyricAdapter {
+    protected DataSetObserver mObserver;
 
-    String getLine(long milliTime);
+    public abstract int getLineIndex(long milliTime);
 
-    String getLine(int index);
+    public abstract String getLine(long milliTime);
 
-    long getMilliTime(int index);
+    public abstract String getLine(int index);
 
-    public int size();
+    public abstract long getMilliTime(int index);
+
+    public abstract int size();
+
+    public void setDataSetObserver(DataSetObserver observer) {
+        this.mObserver = observer;
+    }
+
+    public void notifyDataSetChanged() {
+        if (mObserver != null) {
+            mObserver.onDataSetChanged(this);
+        }
+    }
+
+    interface DataSetObserver {
+        void onDataSetChanged(LyricAdapter lyricAdapter);
+    }
 }

@@ -10,7 +10,7 @@ import me.zhehua.lyric.Lyric;
  * Created by Zhehua on 2016/10/21.
  */
 
-public class SimpleLyricAdapter implements LyricAdapter {
+public class SimpleLyricAdapter extends LyricAdapter {
 
     private Lyric mLyric;
 
@@ -20,6 +20,11 @@ public class SimpleLyricAdapter implements LyricAdapter {
 
     public SimpleLyricAdapter(Lyric lyric) {
         this.mLyric = lyric;
+    }
+
+    public void setInputStream(InputStream inputStream) throws IOException {
+        mLyric = new ArrayLyric(inputStream);
+        notifyDataSetChanged();
     }
 
     @Override

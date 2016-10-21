@@ -10,7 +10,7 @@ import me.zhehua.lyric.Lyric;
  * Created by Zhehua on 2016/10/21.
  */
 
-public class DoubleLyricAdapter implements LyricAdapter {
+public class DoubleLyricAdapter extends LyricAdapter {
 
     private Lyric mLyricA;
     private Lyric mLyricB;
@@ -23,6 +23,12 @@ public class DoubleLyricAdapter implements LyricAdapter {
     public DoubleLyricAdapter(Lyric lyricA, Lyric lyricB) {
         this.mLyricA = lyricA;
         this.mLyricB = lyricB;
+    }
+
+    public void setInputStreams(InputStream inputStreamA, InputStream inputStreamB) throws IOException {
+        mLyricA = new ArrayLyric(inputStreamA);
+        mLyricB = new ArrayLyric(inputStreamB);
+        notifyDataSetChanged();
     }
 
     @Override

@@ -25,7 +25,8 @@ import static android.view.MotionEvent.ACTION_UP;
  * Created by Zhehua on 2016/10/18.
  */
 
-public class LyricView extends FrameLayout implements View.OnTouchListener, View.OnScrollChangeListener{
+public class LyricView extends FrameLayout
+        implements View.OnTouchListener, View.OnScrollChangeListener, LyricAdapter.DataSetObserver{
 
     private static final String TAG = "LyricView";
 
@@ -110,8 +111,36 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
 
     public void setLyricAdapter(LyricAdapter lyricAdapter) {
         mAdapter = lyricAdapter;
-        mLineYPositions = new ArrayList<>(lyricAdapter.size());
-        initViews();
+        initViews(lyricAdapter.size());
+    }
+
+    private void initViews(int n) {
+        mLineYPositions = new ArrayList<>(n);
+
+        TextView blankHeader = new TextView(getContext());
+        blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                halfHeight));
+        mContentView.addView(blankHeader);
+        LinearLayout.LayoutParams textLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        int size = mAdapter.size();
+        for (int i = 1; i < size; i ++) {
+            String sentence = mAdapter.getLine(i);
+            TextView textView = new TextView(getContext());
+            textView.setText(sentence);
+            textView.setTextColor(0x50e0e0e0);
+            textView.setLayoutParams(textLayoutParams);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            textView.setPadding(20, 20, 15, 15);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            mContentView.addView(textView);
+        }
+        final TextView blankFooter = new TextView(getContext());
+        blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                halfHeight));
+        mContentView.addView(blankFooter);
+
         mContentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -146,33 +175,6 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
                 });
             }
         });
-    }
-
-    private void initViews() {
-
-        TextView blankHeader = new TextView(getContext());
-        blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                halfHeight));
-        mContentView.addView(blankHeader);
-        LinearLayout.LayoutParams textLayoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        int size = mAdapter.size();
-        for (int i = 1; i < size; i ++) {
-            String sentence = mAdapter.getLine(i);
-            TextView textView = new TextView(getContext());
-            textView.setText(sentence);
-            textView.setTextColor(0x50e0e0e0);
-            textView.setLayoutParams(textLayoutParams);
-            textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            textView.setPadding(20, 20, 15, 15);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            mContentView.addView(textView);
-        }
-        final TextView blankFooter = new TextView(getContext());
-        blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                halfHeight));
-        mContentView.addView(blankFooter);
     }
 
     /**
@@ -227,6 +229,11 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
         }
     }
 
+    @Override
+    public void onDataSetChanged(LyricAdapter lyricAdapter) {
+        initViews(lyricAdapter.size());
+    }
+
     public class ScrollRunnable implements Runnable {
         long nextTime;
 
@@ -270,6 +277,10 @@ public class LyricView extends FrameLayout implements View.OnTouchListener, View
 
     public void pauseScroll() {
         removeCallbacks(mScrollRunnable);
+    }
+
+    public LyricAdapter getAdapter() {
+        return mAdapter;
     }
 
     public interface OnLyricProgressChangedListener {
