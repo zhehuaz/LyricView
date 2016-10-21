@@ -17,12 +17,12 @@ import me.zhehua.SimpleLrcParser;
 public class ArrayLyric implements Lyric {
     protected ArrayList<AbstractMap.SimpleEntry<Long, String>> mLyric;
 
-    InputStream mLyricInputStream;
-    LrcParser mLrcParser;
+    protected InputStream mLyricInputStream;
+    protected LrcParser mLrcParser;
 
     public ArrayLyric() {
-        super();
         mLrcParser = new SimpleLrcParser();
+        mLyric = new ArrayList<>();
         mLyric.add(new AbstractMap.SimpleEntry<>(-1L, "head"));
     }
 
