@@ -1,5 +1,5 @@
 # LyricView
-![Demo](https://github.com/LangleyChang/LyricView/blob/master/demo.gif)
+![Demo](https://github.com/LangleyChang/LyricView/blob/master/demo_double.gif)
 
 A netease-music-like scrolling lyric view.
 
