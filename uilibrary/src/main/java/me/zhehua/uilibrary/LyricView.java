@@ -28,7 +28,7 @@ import static android.view.MotionEvent.ACTION_UP;
  */
 
 public class LyricView extends FrameLayout
-        implements View.OnTouchListener, View.OnScrollChangeListener, LyricAdapter.DataSetObserver{
+        implements View.OnTouchListener, View.OnScrollChangeListener, LyricAdapter.DataSetObserver {
 
     private static final String TAG = "LyricView";
 
@@ -72,6 +72,11 @@ public class LyricView extends FrameLayout
                     this.scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
                     invalidate();
                 }
+            }
+
+            @Override
+            public void fling(int velocityY) {
+                super.fling(velocityY / 3);
             }
         };
         mScrollLyricView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -131,7 +136,7 @@ public class LyricView extends FrameLayout
             String sentence = mAdapter.getLine(i);
             TextView textView = new TextView(getContext());
             textView.setText(sentence);
-            textView.setTextColor(0x50e0e0e0);
+            textView.setTextColor(mNormalTextColor);
             textView.setLayoutParams(textLayoutParams);
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
             textView.setPadding(20, 20, 15, 15);
@@ -146,7 +151,7 @@ public class LyricView extends FrameLayout
         mContentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                halfHeight = mScrollLyricView.getHeight() / 2;
+                halfHeight = mScrollLyricView.getHeight() / 2 + 5;
                 Log.i(TAG, "onLayout");
                 mScrollLyricView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 ViewGroup.LayoutParams headerLayoutParams = mContentView.getChildAt(0).getLayoutParams();
@@ -188,22 +193,25 @@ public class LyricView extends FrameLayout
         return startScroll(0L);
     }
 
-    private volatile boolean isSkipScroll = false;
+    volatile boolean isSkipScroll = false;
+
+    Runnable enableAutoScroll = new Runnable() {
+        @Override
+        public void run() {
+            isSkipScroll = false;
+        }
+    };
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getAction()) {
             case ACTION_DOWN:
+                removeCallbacks(enableAutoScroll);
                 isSkipScroll = true;
-                mIndicator.enable();
+                mIndicator.enable   ();
                 break;
             case ACTION_UP:
-                postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        isSkipScroll = false;
-                    }
-                }, 3000);
+                postDelayed(enableAutoScroll, 3000);
                 break;
         }
         return false;
@@ -271,7 +279,7 @@ public class LyricView extends FrameLayout
             mIndicator.disable();
             int curY = mScrollLyricView.getScrollY();
             // not accurate
-            mScroller.startScroll(0, curY, 0, mLineYPositions.get(curHighlightLine) - curY - 5, 1000);
+            mScroller.startScroll(0, curY, 0, mLineYPositions.get(curHighlightLine) - curY, 1000);
             mScrollLyricView.invalidate();
         }
         return true;
