@@ -43,7 +43,7 @@ public class RangeSpan extends ReplacementSpan {
         if (fm != null) {
 
             fm.ascent = bounds.top;
-            fm.descent = 0;
+            fm.descent = 6;
 
             fm.top = fm.ascent;
             fm.bottom = 0;

@@ -1,5 +1,6 @@
 package me.zhehua.uilibrary;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.zhehua.uilibrary.adapter.LyricAdapter;
+import me.zhehua.uilibrary.range.RangedTextView;
 
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_UP;
@@ -49,9 +52,19 @@ public class LyricView extends FrameLayout
     private int mSelectedTextColor = DEFAULT_SELECTED_COLOR;
     private int mHighlightTextColor = DEFAULT_HIGHLIGHT_COLOR;
 
-    private static final int DEFAULT_NORMAL_COLOR = 0x50e0e0e0;
-    private static final int DEFAULT_SELECTED_COLOR = 0x90e0e0e0;
-    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xf0e0e0e0;
+    private static final int DEFAULT_NORMAL_COLOR = 0xff898989;
+    private static final int DEFAULT_SELECTED_COLOR = 0xffc0c0c0;
+    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xfff0f0f0;
+
+    /**
+     *   <-------------->  slicing
+     *  ^
+     *  |
+     *  | scrolling
+     *  |
+     *  v
+     */
+    private boolean mIsSlicing = true;
 
     public LyricView(Context context) {
         this(context, null);
@@ -129,14 +142,19 @@ public class LyricView extends FrameLayout
                 halfHeight));
         mContentView.addView(blankHeader);
         LinearLayout.LayoutParams textLayoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
+        textLayoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         int size = mAdapter.size();
         for (int i = 1; i < size; i ++) {
             String sentence = mAdapter.getLine(i);
-            TextView textView = new TextView(getContext());
-            textView.setText(sentence);
+            RangedTextView textView = new RangedTextView(getContext());
+            textView.setRangedText(sentence, 0, mAdapter.getLineLength(i) == -1 ? sentence.length() : mAdapter.getLineLength(i));
             textView.setTextColor(mNormalTextColor);
+            textView.setRangedColor(mHighlightTextColor);
+            if (!mIsSlicing) {
+                textView.setRange(1);
+            }
             textView.setLayoutParams(textLayoutParams);
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
             textView.setPadding(20, 20, 15, 15);
@@ -208,7 +226,7 @@ public class LyricView extends FrameLayout
             case ACTION_DOWN:
                 removeCallbacks(enableAutoScroll);
                 isSkipScroll = true;
-                mIndicator.enable   ();
+                mIndicator.enable();
                 break;
             case ACTION_UP:
                 postDelayed(enableAutoScroll, 3000);
@@ -254,8 +272,25 @@ public class LyricView extends FrameLayout
     }
 
     private void switchHighlight(int from, int to) {
-        ((TextView) mContentView.getChildAt(to)).setTextColor(mHighlightTextColor);
-        ((TextView) mContentView.getChildAt(from)).setTextColor(mNormalTextColor);
+        if (from > 0) {
+            ((RangedTextView) mContentView.getChildAt(from)).setRangedColor(mNormalTextColor);
+        }
+        if (to < mAdapter.size() && to > 0) {
+            ((RangedTextView) mContentView.getChildAt(to)).setRangedColor(mHighlightTextColor);
+            final RangedTextView rangedTextView = (RangedTextView) mContentView.getChildAt(to);
+            long duration = mAdapter.getMilliTime(to + 1) - mAdapter.getMilliTime(to);
+            ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    rangedTextView.setRange((Float) animation.getAnimatedValue());
+                }
+            });
+            animator.setDuration(Math.max(0, duration - 300));
+            animator.setInterpolator(new LinearInterpolator());
+            animator.start();
+        }
+
     }
 
     private ScrollRunnable mScrollRunnable = new ScrollRunnable();

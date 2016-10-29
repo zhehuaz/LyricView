@@ -14,6 +14,15 @@ public abstract class LyricAdapter {
 
     public abstract String getLine(int index);
 
+    /**
+     * Implement this when the length of lyric sentence doesn't cover the whole line.
+     * @param index line num
+     * @return the actual length of lyric sentence
+     */
+    public int getLineLength(int index) {
+        return -1;
+    }
+
     public abstract long getMilliTime(int index);
 
     public abstract int size();
