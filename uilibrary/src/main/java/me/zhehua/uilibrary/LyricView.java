@@ -250,10 +250,10 @@ public class LyricView extends FrameLayout
         }
         Log.d(TAG, "currSelectedLine: " + currSelectedLine + " scrollY: " + scrollY + " linePosition: " + mLineYPositions.get(currSelectedLine));
         if (lastSelected != curHighlightLine) {
-            ((TextView) mContentView.getChildAt(lastSelected)).setTextColor(mNormalTextColor);
+            ((RangedTextView) mContentView.getChildAt(lastSelected)).setTextColor(mNormalTextColor);
         }
         if (currSelectedLine != curHighlightLine) {
-            ((TextView) mContentView.getChildAt(currSelectedLine)).setTextColor(mSelectedTextColor);
+            ((RangedTextView) mContentView.getChildAt(currSelectedLine)).setTextColor(mSelectedTextColor);
         }
     }
 
