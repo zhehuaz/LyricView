@@ -10,7 +10,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -53,8 +52,8 @@ public class LyricView extends FrameLayout
     private int mHighlightTextColor = DEFAULT_HIGHLIGHT_COLOR;
 
     private static final int DEFAULT_NORMAL_COLOR = 0xff898989;
-    private static final int DEFAULT_SELECTED_COLOR = 0xffc0c0c0;
-    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xfff0f0f0;
+    private static final int DEFAULT_SELECTED_COLOR = 0xff00ff00;
+    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xffff0000;
 
     /**
      *   <-------------->  slicing
@@ -127,6 +126,7 @@ public class LyricView extends FrameLayout
             mLineYPositions.add(position);
             position += mContentView.getChildAt(i).getHeight();
         }
+        mLineYPositions.add(position);
     }
 
     public void setLyricAdapter(LyricAdapter lyricAdapter) {
@@ -137,7 +137,7 @@ public class LyricView extends FrameLayout
     private void initViews(int n) {
         mLineYPositions = new ArrayList<>(n);
 
-        TextView blankHeader = new TextView(getContext());
+        RangedTextView blankHeader = new RangedTextView(getContext());
         blankHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
         mContentView.addView(blankHeader);
@@ -150,8 +150,9 @@ public class LyricView extends FrameLayout
             String sentence = mAdapter.getLine(i);
             RangedTextView textView = new RangedTextView(getContext());
             textView.setRangedText(sentence, 0, mAdapter.getLineLength(i) == -1 ? sentence.length() : mAdapter.getLineLength(i));
-            textView.setTextColor(mNormalTextColor);
-            textView.setRangedColor(mHighlightTextColor);
+            textView.setRangedColor(mHighlightTextColor)
+                    .setRangedBackColor(mNormalTextColor)
+                    .setNormalColor(mNormalTextColor);
             if (!mIsSlicing) {
                 textView.setRange(1);
             }
@@ -250,10 +251,16 @@ public class LyricView extends FrameLayout
         }
         Log.d(TAG, "currSelectedLine: " + currSelectedLine + " scrollY: " + scrollY + " linePosition: " + mLineYPositions.get(currSelectedLine));
         if (lastSelected != curHighlightLine) {
-            ((RangedTextView) mContentView.getChildAt(lastSelected)).setTextColor(mNormalTextColor);
+            ((RangedTextView) mContentView.getChildAt(lastSelected))
+                    .setRangedBackColor(mNormalTextColor)
+                    .setRange(0.f)
+                    .setNormalColor(mNormalTextColor);
         }
         if (currSelectedLine != curHighlightLine) {
-            ((RangedTextView) mContentView.getChildAt(currSelectedLine)).setTextColor(mSelectedTextColor);
+            ((RangedTextView) mContentView.getChildAt(currSelectedLine))
+                    .setRangedBackColor(mSelectedTextColor)
+                    .setRange(0.f)
+                    .setNormalColor(mSelectedTextColor);
         }
     }
 
@@ -271,24 +278,36 @@ public class LyricView extends FrameLayout
         }
     }
 
-    private void switchHighlight(int from, int to) {
-        if (from > 0) {
-            ((RangedTextView) mContentView.getChildAt(from)).setRangedColor(mNormalTextColor);
-        }
-        if (to < mAdapter.size() && to > 0) {
-            ((RangedTextView) mContentView.getChildAt(to)).setRangedColor(mHighlightTextColor);
+    ValueAnimator slicingAnimator = ValueAnimator.ofFloat(0, 1);
+
+    private void switchHighlight(int from, final int to) {
+
+        slicingAnimator.cancel();
+        ((RangedTextView) mContentView.getChildAt(to))
+                .setRangedColor(mHighlightTextColor)
+                .setRangedBackColor(mSelectedTextColor)
+                .setRange(0)
+                .setNormalColor(mHighlightTextColor);
+
+        ((RangedTextView) mContentView.getChildAt(from))
+                .setRangedBackColor(mNormalTextColor)
+                .setRangedColor(mNormalTextColor)
+                .setRange(0)
+                .setNormalColor(mNormalTextColor);
+
+
+        if (to < mAdapter.size()) {
             final RangedTextView rangedTextView = (RangedTextView) mContentView.getChildAt(to);
             long duration = mAdapter.getMilliTime(to + 1) - mAdapter.getMilliTime(to);
-            ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            slicingAnimator.removeAllUpdateListeners();
+            slicingAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    rangedTextView.setRange((Float) animation.getAnimatedValue());
+                    rangedTextView.setRange((Float) animation.getAnimatedValue()).show();
                 }
             });
-            animator.setDuration(Math.max(0, duration - 300));
-            animator.setInterpolator(new LinearInterpolator());
-            animator.start();
+            slicingAnimator.setDuration(Math.max(0, duration - 300));
+            slicingAnimator.start();
         }
 
     }
@@ -314,7 +333,10 @@ public class LyricView extends FrameLayout
             mIndicator.disable();
             int curY = mScrollLyricView.getScrollY();
             // not accurate
-            mScroller.startScroll(0, curY, 0, mLineYPositions.get(curHighlightLine) - curY, 1000);
+            int curLinePos = mLineYPositions.get(curHighlightLine);
+            int nextLinePos = mLineYPositions.get(curHighlightLine + 1);
+            mScroller.startScroll(0, curY, 0,
+                    (int) (curLinePos - (nextLinePos - curLinePos) / 2.f - curY), 1000);
             mScrollLyricView.invalidate();
         }
         return true;

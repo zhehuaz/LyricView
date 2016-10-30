@@ -25,23 +25,31 @@ public class RangedTextView extends TextView {
 
     public void setRangedText(String text, int start, int end) {
         SpannableString spannable = new SpannableString(text);
-        spannable.setSpan(mRangeSpan, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        spannable.setSpan(mRangeSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         super.setText(spannable);
     }
 
-    public void setRange(float percentage) {
+    public RangedTextView setRange(float percentage) {
         mRangeSpan.setRange(percentage);
-        postInvalidate();
+        return this;
     }
 
-    public void setTextColor(int color) {
-        mRangeSpan.setTextColor(color);
+    public RangedTextView setNormalColor(int color) {
         super.setTextColor(color);
-//        postInvalidate();
+        return this;
     }
 
-    public void setRangedColor(@ColorInt int highlightColor) {
+    public RangedTextView setRangedColor(@ColorInt int highlightColor) {
         mRangeSpan.setHighlightColor(highlightColor);
-        postInvalidate();
+        return this;
+    }
+
+    public RangedTextView setRangedBackColor(@ColorInt int normalColor) {
+        mRangeSpan.setTextColor(normalColor);
+        return this;
+    }
+
+    public void show() {
+        invalidate();
     }
 }
