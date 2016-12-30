@@ -56,6 +56,8 @@ public class RangeSpan extends ReplacementSpan {
 
         int sc = canvas.saveLayer(0, 0, 720, 1080, null, Canvas.ALL_SAVE_FLAG);
 
+        // roughly measure text width to be drawn
+        float textWidth = mPaint.measureText(text.toString());
         // dst
         mPaint.setColor(mTextColor);
         mPaint.setTextSize(paint.getTextSize());
@@ -63,7 +65,7 @@ public class RangeSpan extends ReplacementSpan {
         mPaint.setXfermode(xfermode);
         // src
         mPaint.setColor(mHighlightColor);
-        canvas.drawRect(0, 0, bounds.right * mPercent, 720, mPaint);
+        canvas.drawRect(bounds.left, 0, textWidth * mPercent, 720, mPaint);
         mPaint.setXfermode(null);
         canvas.restoreToCount(sc);
     }

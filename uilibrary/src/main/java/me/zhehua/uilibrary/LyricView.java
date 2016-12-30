@@ -30,7 +30,7 @@ import static android.view.MotionEvent.ACTION_UP;
  */
 
 public class LyricView extends FrameLayout
-        implements View.OnTouchListener, View.OnScrollChangeListener, LyricAdapter.DataSetObserver {
+        implements View.OnTouchListener, LyricAdapter.DataSetObserver, View.OnScrollChangeListener {
 
     private static final String TAG = "LyricView";
 
@@ -52,8 +52,8 @@ public class LyricView extends FrameLayout
     private int mHighlightTextColor = DEFAULT_HIGHLIGHT_COLOR;
 
     private static final int DEFAULT_NORMAL_COLOR = 0xff898989;
-    private static final int DEFAULT_SELECTED_COLOR = 0xff00ff00;
-    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xffff0000;
+    private static final int DEFAULT_SELECTED_COLOR = 0xffA0A0A0;
+    private static final int DEFAULT_HIGHLIGHT_COLOR = 0xffffffff;
 
     /**
      *   <-------------->  slicing
@@ -162,7 +162,7 @@ public class LyricView extends FrameLayout
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             mContentView.addView(textView);
         }
-        final TextView blankFooter = new TextView(getContext());
+        final TextView blankFooter = new RangedTextView(getContext());
         blankFooter.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 halfHeight));
         mContentView.addView(blankFooter);
