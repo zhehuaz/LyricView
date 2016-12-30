@@ -1,5 +1,5 @@
 # LyricView
-![Demo](https://github.com/LangleyChang/LyricView/blob/master/demo_double.gif)
+![Demo](https://github.com/LangleyChang/LyricView/blob/master/demo_karaok.gif)
 
 A netease-music-like scrolling lyric view.
 
@@ -10,6 +10,7 @@ A netease-music-like scrolling lyric view.
 - Text highlight
 - Manual progress select
 - Multi-language display
+- Karaoke effect
 
 ## Usage
   
