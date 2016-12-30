@@ -59,4 +59,9 @@ public class DoubleLyricAdapter extends LyricAdapter {
     public int size() {
         return mLyricA.size();
     }
+
+    @Override
+    public int getLineLength(int index) {
+        return mLyricA.getLine(index).length();
+    }
 }

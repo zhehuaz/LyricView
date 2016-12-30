@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import me.zhehua.LrcParser;
 import me.zhehua.SimpleLrcParser;
@@ -105,10 +104,5 @@ public class ArrayLyric implements Lyric {
         if (middle == -1)
             return -1;
         return left;
-    }
-
-    @Override
-    public Iterator iterator() {
-        return null;
     }
 }
