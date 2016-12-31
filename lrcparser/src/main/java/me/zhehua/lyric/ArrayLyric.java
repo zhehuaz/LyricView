@@ -78,6 +78,14 @@ public class ArrayLyric implements Lyric {
     }
 
     @Override
+    public AbstractMap.SimpleEntry<Long, String> remove() {
+        if (!mLyric.isEmpty()) {
+            return mLyric.remove(mLyric.size() - 1);
+        }
+        return null;
+    }
+
+    @Override
     public int size() {
         return mLyric.size();
     }

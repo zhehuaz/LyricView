@@ -1,5 +1,7 @@
 package me.zhehua.lyric;
 
+import java.util.AbstractMap;
+
 /**
  * Attention: The first sentence of lyric should be null.
  *            Or to say, the index of lyric starts with 1.
@@ -17,5 +19,7 @@ public interface Lyric {
 
     void append(long milliTime, String oneLine);
 
-    public int size();
+    AbstractMap.SimpleEntry<Long, String> remove();
+
+    int size();
 }

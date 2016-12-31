@@ -5,10 +5,7 @@ import java.io.InputStream;
 
 import me.zhehua.lyric.Lyric;
 
-public interface LrcParser {
+public interface LrcParser<T extends Lyric> {
 
-    long MILLIS_IN_A_MINUTE = 60 * 1000;
-    long MILLIS_IN_A_SECOND = 1000;
-
-    void parseSource(Lyric lyric, InputStream inputStream) throws IOException;
+    void parseSource(T lyric, InputStream inputStream) throws IOException;
 }

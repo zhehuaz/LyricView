@@ -26,7 +26,6 @@ public class SimpleLrcParser implements LrcParser {
     private static final Pattern timePattern = Pattern.compile("(?<=^\\[)\\d{2}:\\d{2}\\.\\d{2}(?=\\])");
     private static final Pattern contentPattern = Pattern.compile("(?<=\\[\\d{2}:\\d{2}\\.\\d{2}\\]).*$");
 
-
     protected void constructOneLine(Lyric lyric, String line) {
         long time = 0;
         String content = null;
@@ -34,15 +33,7 @@ public class SimpleLrcParser implements LrcParser {
         String timeString;
         if (timeMatcher.find()) { // in case malformed
             timeString = timeMatcher.group(0);
-            String[] times = timeString.split(":|\\.");
-            if (times.length == 3) {
-                time += Integer.parseInt(times[0]) * MILLIS_IN_A_MINUTE;
-                time += Integer.parseInt(times[1]) * MILLIS_IN_A_SECOND;
-                while (times[2].length() < 3) {
-                    times[2] += "0";
-                }
-                time += Integer.parseInt(times[2]);
-            }
+            time = TimestampUtils.string2Timestamp(timeString);
         } else {
             System.err.println("Time tag should format as [mm:ss:ll]");
             return;
